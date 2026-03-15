@@ -1,0 +1,118 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Gerar Vídeo com VEO 3</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Prompt</ion-card-title>
+      <ion-card-subtitle>Descreva o vídeo que deseja gerar</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-textarea
+        [(ngModel)]="prompt"
+        placeholder="Ex: A cinematic shot of a red fox running through a snowy forest at golden hour..."
+        [rows]="5"
+        fill="outline"
+        label="Prompt"
+        labelPlacement="floating">
+      </ion-textarea>
+
+      <ion-textarea
+        [(ngModel)]="negativePrompt"
+        placeholder="Ex: blurry, low quality, distorted..."
+        [rows]="2"
+        fill="outline"
+        label="Negative Prompt (opcional)"
+        labelPlacement="floating"
+        class="ion-margin-top">
+      </ion-textarea>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Configurações</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+
+      <ion-item>
+        <ion-label>Modelo</ion-label>
+        <ion-select [(ngModel)]="model" interface="popover">
+          <ion-select-option value="veo-3.0-generate-preview">VEO 3.0 (Preview)</ion-select-option>
+          <ion-select-option value="veo-2.0-generate-001">VEO 2.0</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
+        <ion-label>Duração</ion-label>
+        <ion-select [(ngModel)]="durationSeconds" interface="popover">
+          <ion-select-option [value]="5">5 segundos</ion-select-option>
+          <ion-select-option [value]="8">8 segundos</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
+        <ion-label>Proporção</ion-label>
+        <ion-select [(ngModel)]="aspectRatio" interface="popover">
+          <ion-select-option value="16:9">16:9 (Landscape)</ion-select-option>
+          <ion-select-option value="9:16">9:16 (Portrait)</ion-select-option>
+          <ion-select-option value="1:1">1:1 (Square)</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
+        <ion-label>Melhorar prompt automaticamente</ion-label>
+        <ion-toggle [(ngModel)]="enhancePrompt" slot="end"></ion-toggle>
+      </ion-item>
+
+      <ion-item>
+        <ion-label>Gerar áudio</ion-label>
+        <ion-toggle [(ngModel)]="generateAudio" slot="end"></ion-toggle>
+      </ion-item>
+
+    </ion-card-content>
+  </ion-card>
+
+  <ion-button
+    expand="block"
+    [disabled]="!prompt || isGenerating"
+    (click)="generate()"
+    class="ion-margin">
+    <ion-icon name="videocam-outline" slot="start"></ion-icon>
+    {{ isGenerating ? 'Gerando...' : 'Gerar Vídeo' }}
+  </ion-button>
+
+  @if (currentJob) {
+    <ion-card color="light">
+      <ion-card-header>
+        <ion-card-title>Status da Geração</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-item lines="none">
+          <ion-icon
+            [name]="currentJob.status === 'completed' ? 'checkmark-circle' : currentJob.status === 'failed' ? 'close-circle' : 'hourglass'"
+            [color]="currentJob.status === 'completed' ? 'success' : currentJob.status === 'failed' ? 'danger' : 'warning'"
+            slot="start" size="large">
+          </ion-icon>
+          <ion-label>
+            <h2>{{ statusLabel }}</h2>
+            @if (currentJob.errorMessage) {
+              <p>{{ currentJob.errorMessage }}</p>
+            }
+            @if (currentJob.outputPath) {
+              <p>Salvo em: {{ currentJob.outputPath }}</p>
+            }
+          </ion-label>
+        </ion-item>
+        @if (currentJob.status === 'processing') {
+          <ion-progress-bar type="indeterminate" color="primary"></ion-progress-bar>
+        }
+      </ion-card-content>
+    </ion-card>
+  }
+
+</ion-content>

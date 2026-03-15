@@ -1,0 +1,97 @@
+{
+  "name": "frontend",
+  "version": "0.0.1",
+  "author": "Ionic Framework",
+  "homepage": "https://ionicframework.com/",
+  "main": "electron/main.js",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "lint": "ng lint",
+    "electron:dev": "concurrently \"npm start\" \"wait-on http://localhost:4200 && cross-env NODE_ENV=development electron .\"",
+    "electron:build": "ng build --configuration production && electron-builder build --win",
+    "electron": "cross-env NODE_ENV=development electron ."
+  },
+  "build": {
+    "appId": "com.videogenerator.app",
+    "productName": "VideoGenerator",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "electron/**/*",
+      "dist/frontend/browser/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "src/assets/icon.png"
+    },
+    "extraResources": [
+      {
+        "from": "../backend/publish",
+        "to": "backend",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "^20.0.0",
+    "@angular/common": "^20.0.0",
+    "@angular/compiler": "^20.0.0",
+    "@angular/core": "^20.0.0",
+    "@angular/forms": "^20.0.0",
+    "@angular/platform-browser": "^20.0.0",
+    "@angular/platform-browser-dynamic": "^20.0.0",
+    "@angular/router": "^20.0.0",
+    "@capacitor/app": "8.0.1",
+    "@capacitor/core": "8.2.0",
+    "@capacitor/haptics": "8.0.1",
+    "@capacitor/keyboard": "8.0.1",
+    "@capacitor/status-bar": "8.0.1",
+    "@ionic/angular": "^8.0.0",
+    "ionicons": "^7.0.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^20.0.0",
+    "@angular-eslint/builder": "^20.0.0",
+    "@angular-eslint/eslint-plugin": "^20.0.0",
+    "@angular-eslint/eslint-plugin-template": "^20.0.0",
+    "@angular-eslint/schematics": "^20.0.0",
+    "@angular-eslint/template-parser": "^20.0.0",
+    "@angular/cli": "^20.0.0",
+    "@angular/compiler-cli": "^20.0.0",
+    "@angular/language-service": "^20.0.0",
+    "@capacitor/cli": "8.2.0",
+    "@ionic/angular-toolkit": "^12.0.0",
+    "@types/jasmine": "~5.1.0",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^41.0.2",
+    "electron-builder": "^26.8.1",
+    "eslint": "^9.16.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jsdoc": "^48.2.1",
+    "eslint-plugin-prefer-arrow": "1.2.2",
+    "jasmine-core": "~5.1.0",
+    "jasmine-spec-reporter": "~5.0.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "typescript": "~5.9.0",
+    "wait-on": "^9.0.4"
+  },
+  "description": "An Ionic project"
+}

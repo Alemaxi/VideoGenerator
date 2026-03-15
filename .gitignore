@@ -1,0 +1,17 @@
+# .NET
+backend/bin/
+backend/obj/
+backend/*.db
+backend/*.db-shm
+backend/*.db-wal
+backend/appsettings.Development.json
+
+# Node / Angular / Electron
+frontend/node_modules/
+frontend/dist/
+frontend/dist-electron/
+frontend/.angular/
+
+# OS
+.DS_Store
+Thumbs.db
