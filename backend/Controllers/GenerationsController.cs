@@ -53,7 +53,7 @@ public class GenerationsController(
 
         var generation = new Generation
         {
-            Type = "video",
+            Type = request.Mode,
             Provider = "google",
             Model = request.Model ?? "veo-3.0-generate-preview",
             Prompt = request.Prompt,

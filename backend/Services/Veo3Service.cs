@@ -1,7 +1,5 @@
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using VideoGenerator.API.Models;
 
 namespace VideoGenerator.API.Services;
 
@@ -15,30 +13,59 @@ public class Veo3Service(HttpClient httpClient, ILogger<Veo3Service> logger)
         var model = request.Model ?? DefaultModel;
         var url = $"{BaseUrl}/models/{model}:predictLongRunning?key={apiKey}";
 
+        object instance = request.Mode switch
+        {
+            "image-to-video" => new
+            {
+                prompt = request.Prompt,
+                image = new
+                {
+                    bytesBase64Encoded = request.ImageBase64,
+                    mimeType = request.ImageMimeType ?? "image/jpeg"
+                },
+                durationSeconds = request.DurationSeconds ?? 8,
+                aspectRatio = request.AspectRatio ?? "16:9",
+                generateAudio = request.GenerateAudio ?? true
+            },
+            "first-last-frame" => new
+            {
+                prompt = request.Prompt,
+                firstFrame = new
+                {
+                    bytesBase64Encoded = request.FirstFrameBase64,
+                    mimeType = request.FirstFrameMimeType ?? "image/jpeg"
+                },
+                lastFrame = new
+                {
+                    bytesBase64Encoded = request.LastFrameBase64,
+                    mimeType = request.LastFrameMimeType ?? "image/jpeg"
+                },
+                durationSeconds = request.DurationSeconds ?? 8,
+                aspectRatio = request.AspectRatio ?? "16:9",
+                generateAudio = request.GenerateAudio ?? true
+            },
+            _ => (object)new // text-to-video (default)
+            {
+                prompt = request.Prompt,
+                negativePrompt = request.NegativePrompt,
+                durationSeconds = request.DurationSeconds ?? 8,
+                aspectRatio = request.AspectRatio ?? "16:9",
+                enhancePrompt = request.EnhancePrompt ?? true,
+                generateAudio = request.GenerateAudio ?? true
+            }
+        };
+
         var payload = new
         {
-            instances = new[]
-            {
-                new
-                {
-                    prompt = request.Prompt,
-                    negativePrompt = request.NegativePrompt,
-                    durationSeconds = request.DurationSeconds ?? 8,
-                    aspectRatio = request.AspectRatio ?? "16:9",
-                    enhancePrompt = request.EnhancePrompt ?? true,
-                    generateAudio = request.GenerateAudio ?? true
-                }
-            },
-            parameters = new
-            {
-                storageUri = request.StorageUri
-            }
+            instances = new[] { instance },
+            parameters = new { storageUri = request.StorageUri }
         };
 
         var json = JsonSerializer.Serialize(payload);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        logger.LogInformation("Starting VEO 3 generation for prompt: {Prompt}", request.Prompt[..Math.Min(50, request.Prompt.Length)]);
+        logger.LogInformation("Starting VEO 3 [{Mode}] generation for prompt: {Prompt}",
+            request.Mode, request.Prompt[..Math.Min(50, request.Prompt.Length)]);
 
         var response = await httpClient.PostAsync(url, content);
         var responseBody = await response.Content.ReadAsStringAsync();
@@ -77,7 +104,6 @@ public class Veo3Service(HttpClient httpClient, ILogger<Veo3Service> logger)
         if (root.TryGetProperty("error", out var errorEl))
             return new OperationStatus { Done = true, Error = errorEl.GetRawText() };
 
-        // Extract video URIs from response
         var videos = new List<string>();
         if (root.TryGetProperty("response", out var responseEl) &&
             responseEl.TryGetProperty("videos", out var videosEl))
@@ -103,6 +129,13 @@ public record GenerateVideoRequest
     public bool? EnhancePrompt { get; init; }
     public bool? GenerateAudio { get; init; }
     public string? StorageUri { get; init; }
+    public string Mode { get; init; } = "text-to-video"; // "text-to-video" | "image-to-video" | "first-last-frame"
+    public string? ImageBase64 { get; init; }
+    public string? ImageMimeType { get; init; }
+    public string? FirstFrameBase64 { get; init; }
+    public string? FirstFrameMimeType { get; init; }
+    public string? LastFrameBase64 { get; init; }
+    public string? LastFrameMimeType { get; init; }
 }
 
 public record OperationStatus

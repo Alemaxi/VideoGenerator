@@ -3,7 +3,7 @@ namespace VideoGenerator.API.Models;
 public class Generation
 {
     public int Id { get; set; }
-    public string Type { get; set; } = string.Empty; // "video" | "image"
+    public string Type { get; set; } = string.Empty; // "text-to-video" | "image-to-video" | "first-last-frame"
     public string Provider { get; set; } = "google";
     public string Model { get; set; } = "veo-3.0-generate-preview";
     public string Prompt { get; set; } = string.Empty;
