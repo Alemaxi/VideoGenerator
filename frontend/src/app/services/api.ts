@@ -40,6 +40,13 @@ export class ApiService {
     aspectRatio?: string;
     enhancePrompt?: boolean;
     generateAudio?: boolean;
+    mode?: 'text-to-video' | 'image-to-video' | 'first-last-frame';
+    imageBase64?: string;
+    imageMimeType?: string;
+    firstFrameBase64?: string;
+    firstFrameMimeType?: string;
+    lastFrameBase64?: string;
+    lastFrameMimeType?: string;
   }) {
     return this.http.post<any>(`${this.baseUrl}/api/generations/video`, request);
   }

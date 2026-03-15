@@ -2,10 +2,27 @@
   <ion-toolbar color="primary">
     <ion-title>Gerar Vídeo com VEO 3</ion-title>
   </ion-toolbar>
+  <ion-toolbar>
+    <ion-segment [value]="mode()" (ionChange)="setMode($event.detail.value?.toString())">
+      <ion-segment-button value="text-to-video">
+        <ion-icon name="text-outline"></ion-icon>
+        <ion-label>Texto</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="image-to-video">
+        <ion-icon name="image-outline"></ion-icon>
+        <ion-label>Imagem</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="first-last-frame">
+        <ion-icon name="albums-outline"></ion-icon>
+        <ion-label>1º e Último Frame</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
 
+  <!-- Prompt (todos os modos) -->
   <ion-card>
     <ion-card-header>
       <ion-card-title>Prompt</ion-card-title>
@@ -13,26 +30,107 @@
     </ion-card-header>
     <ion-card-content>
       <ion-textarea
-        [(ngModel)]="prompt"
+        [ngModel]="prompt()"
+        (ngModelChange)="prompt.set($event)"
         placeholder="Ex: A cinematic shot of a red fox running through a snowy forest at golden hour..."
-        [rows]="5"
+        [rows]="4"
         fill="outline"
         label="Prompt"
         labelPlacement="floating">
       </ion-textarea>
 
-      <ion-textarea
-        [(ngModel)]="negativePrompt"
-        placeholder="Ex: blurry, low quality, distorted..."
-        [rows]="2"
-        fill="outline"
-        label="Negative Prompt (opcional)"
-        labelPlacement="floating"
-        class="ion-margin-top">
-      </ion-textarea>
+      @if (mode() === 'text-to-video') {
+        <ion-textarea
+          [ngModel]="negativePrompt()"
+          (ngModelChange)="negativePrompt.set($event)"
+          placeholder="Ex: blurry, low quality, distorted..."
+          [rows]="2"
+          fill="outline"
+          label="Negative Prompt (opcional)"
+          labelPlacement="floating"
+          class="ion-margin-top">
+        </ion-textarea>
+      }
     </ion-card-content>
   </ion-card>
 
+  <!-- Image to Video -->
+  @if (mode() === 'image-to-video') {
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Imagem de Entrada</ion-card-title>
+        <ion-card-subtitle>O VEO 3 irá animar esta imagem</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-button fill="outline" expand="block" onclick="document.getElementById('imgInput').click()">
+          <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
+          Selecionar Imagem
+        </ion-button>
+        <input id="imgInput" type="file" accept="image/*" style="display:none"
+               (change)="onImageSelected($event, 'image')">
+
+        @if (imageBase64()) {
+          <ion-chip color="success" class="ion-margin-top">
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            <ion-label>Imagem selecionada</ion-label>
+          </ion-chip>
+          <img [src]="'data:' + imageMimeType() + ';base64,' + imageBase64()"
+               style="width:100%; max-height:180px; object-fit:cover; border-radius:8px; margin-top:8px">
+        }
+      </ion-card-content>
+    </ion-card>
+  }
+
+  <!-- First + Last Frame -->
+  @if (mode() === 'first-last-frame') {
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Frames de Entrada</ion-card-title>
+        <ion-card-subtitle>O VEO 3 irá gerar a transição entre os frames</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+
+        <ion-label class="ion-margin-bottom"><strong>Primeiro Frame</strong></ion-label>
+        <ion-button fill="outline" expand="block" onclick="document.getElementById('firstFrameInput').click()">
+          <ion-icon name="play-skip-back-outline" slot="start"></ion-icon>
+          Selecionar Primeiro Frame
+        </ion-button>
+        <input id="firstFrameInput" type="file" accept="image/*" style="display:none"
+               (change)="onImageSelected($event, 'firstFrame')">
+
+        @if (firstFrameBase64()) {
+          <img [src]="'data:' + firstFrameMimeType() + ';base64,' + firstFrameBase64()"
+               style="width:100%; max-height:140px; object-fit:cover; border-radius:8px; margin-top:8px">
+          <ion-chip color="success">
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            <ion-label>Primeiro frame selecionado</ion-label>
+          </ion-chip>
+        }
+
+        <div class="ion-margin-top">
+          <ion-label><strong>Último Frame</strong></ion-label>
+          <ion-button fill="outline" expand="block" onclick="document.getElementById('lastFrameInput').click()">
+            <ion-icon name="play-skip-forward-outline" slot="start"></ion-icon>
+            Selecionar Último Frame
+          </ion-button>
+          <input id="lastFrameInput" type="file" accept="image/*" style="display:none"
+                 (change)="onImageSelected($event, 'lastFrame')">
+
+          @if (lastFrameBase64()) {
+            <img [src]="'data:' + lastFrameMimeType() + ';base64,' + lastFrameBase64()"
+                 style="width:100%; max-height:140px; object-fit:cover; border-radius:8px; margin-top:8px">
+            <ion-chip color="success">
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
+              <ion-label>Último frame selecionado</ion-label>
+            </ion-chip>
+          }
+        </div>
+
+      </ion-card-content>
+    </ion-card>
+  }
+
+  <!-- Configurações -->
   <ion-card>
     <ion-card-header>
       <ion-card-title>Configurações</ion-card-title>
@@ -41,7 +139,7 @@
 
       <ion-item>
         <ion-label>Modelo</ion-label>
-        <ion-select [(ngModel)]="model" interface="popover">
+        <ion-select [ngModel]="model()" (ngModelChange)="model.set($event)" interface="popover">
           <ion-select-option value="veo-3.0-generate-preview">VEO 3.0 (Preview)</ion-select-option>
           <ion-select-option value="veo-2.0-generate-001">VEO 2.0</ion-select-option>
         </ion-select>
@@ -49,7 +147,7 @@
 
       <ion-item>
         <ion-label>Duração</ion-label>
-        <ion-select [(ngModel)]="durationSeconds" interface="popover">
+        <ion-select [ngModel]="durationSeconds()" (ngModelChange)="durationSeconds.set($event)" interface="popover">
           <ion-select-option [value]="5">5 segundos</ion-select-option>
           <ion-select-option [value]="8">8 segundos</ion-select-option>
         </ion-select>
@@ -57,21 +155,31 @@
 
       <ion-item>
         <ion-label>Proporção</ion-label>
-        <ion-select [(ngModel)]="aspectRatio" interface="popover">
+        <ion-select [ngModel]="aspectRatio()" (ngModelChange)="aspectRatio.set($event)" interface="popover">
           <ion-select-option value="16:9">16:9 (Landscape)</ion-select-option>
           <ion-select-option value="9:16">9:16 (Portrait)</ion-select-option>
           <ion-select-option value="1:1">1:1 (Square)</ion-select-option>
         </ion-select>
       </ion-item>
 
-      <ion-item>
-        <ion-label>Melhorar prompt automaticamente</ion-label>
-        <ion-toggle [(ngModel)]="enhancePrompt" slot="end"></ion-toggle>
-      </ion-item>
+      @if (mode() === 'text-to-video') {
+        <ion-item>
+          <ion-label>Melhorar prompt automaticamente</ion-label>
+          <ion-toggle
+            [ngModel]="enhancePrompt()"
+            (ionChange)="enhancePrompt.set($event.detail.checked)"
+            slot="end">
+          </ion-toggle>
+        </ion-item>
+      }
 
       <ion-item>
         <ion-label>Gerar áudio</ion-label>
-        <ion-toggle [(ngModel)]="generateAudio" slot="end"></ion-toggle>
+        <ion-toggle
+          [ngModel]="generateAudio()"
+          (ionChange)="generateAudio.set($event.detail.checked)"
+          slot="end">
+        </ion-toggle>
       </ion-item>
 
     </ion-card-content>
@@ -79,14 +187,16 @@
 
   <ion-button
     expand="block"
-    [disabled]="!prompt || isGenerating"
+    [disabled]="!prompt() || isGenerating() ||
+                (mode() === 'image-to-video' && !imageBase64()) ||
+                (mode() === 'first-last-frame' && (!firstFrameBase64() || !lastFrameBase64()))"
     (click)="generate()"
     class="ion-margin">
     <ion-icon name="videocam-outline" slot="start"></ion-icon>
-    {{ isGenerating ? 'Gerando...' : 'Gerar Vídeo' }}
+    {{ isGenerating() ? 'Gerando...' : 'Gerar Vídeo' }}
   </ion-button>
 
-  @if (currentJob) {
+  @if (currentJob()) {
     <ion-card color="light">
       <ion-card-header>
         <ion-card-title>Status da Geração</ion-card-title>
@@ -94,21 +204,21 @@
       <ion-card-content>
         <ion-item lines="none">
           <ion-icon
-            [name]="currentJob.status === 'completed' ? 'checkmark-circle' : currentJob.status === 'failed' ? 'close-circle' : 'hourglass'"
-            [color]="currentJob.status === 'completed' ? 'success' : currentJob.status === 'failed' ? 'danger' : 'warning'"
+            [name]="currentJob()!.status === 'completed' ? 'checkmark-circle' : currentJob()!.status === 'failed' ? 'close-circle' : 'hourglass'"
+            [color]="currentJob()!.status === 'completed' ? 'success' : currentJob()!.status === 'failed' ? 'danger' : 'warning'"
             slot="start" size="large">
           </ion-icon>
           <ion-label>
-            <h2>{{ statusLabel }}</h2>
-            @if (currentJob.errorMessage) {
-              <p>{{ currentJob.errorMessage }}</p>
+            <h2>{{ statusLabel() }}</h2>
+            @if (currentJob()!.errorMessage) {
+              <p>{{ currentJob()!.errorMessage }}</p>
             }
-            @if (currentJob.outputPath) {
-              <p>Salvo em: {{ currentJob.outputPath }}</p>
+            @if (currentJob()!.outputPath) {
+              <p>Salvo em: {{ currentJob()!.outputPath }}</p>
             }
           </ion-label>
         </ion-item>
-        @if (currentJob.status === 'processing') {
+        @if (currentJob()!.status === 'processing') {
           <ion-progress-bar type="indeterminate" color="primary"></ion-progress-bar>
         }
       </ion-card-content>

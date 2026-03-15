@@ -15,7 +15,8 @@
 
       <ion-item>
         <ion-input
-          [(ngModel)]="newKeyLabel"
+          [ngModel]="newKeyLabel()"
+          (ngModelChange)="newKeyLabel.set($event)"
           label="Label (ex: Minha chave pessoal)"
           labelPlacement="floating"
           fill="outline">
@@ -24,7 +25,8 @@
 
       <ion-item class="ion-margin-top">
         <ion-input
-          [(ngModel)]="newKeyValue"
+          [ngModel]="newKeyValue()"
+          (ngModelChange)="newKeyValue.set($event)"
           type="password"
           label="Google API Key"
           labelPlacement="floating"
@@ -36,7 +38,7 @@
       <ion-button
         expand="block"
         class="ion-margin-top"
-        [disabled]="!newKeyValue || isAdding"
+        [disabled]="!newKeyValue() || isAdding()"
         (click)="addKey()">
         <ion-icon name="add-circle-outline" slot="start"></ion-icon>
         Adicionar Chave
@@ -51,7 +53,7 @@
     </ion-card-header>
     <ion-card-content>
 
-      @if (apiKeys.length === 0) {
+      @if (apiKeys().length === 0) {
         <ion-item lines="none">
           <ion-label color="medium" class="ion-text-center">
             Nenhuma chave cadastrada.<br>
@@ -60,7 +62,7 @@
         </ion-item>
       }
 
-      @for (key of apiKeys; track key.id) {
+      @for (key of apiKeys(); track key.id) {
         <ion-item>
           <ion-icon name="key-outline" slot="start" [color]="key.isActive ? 'primary' : 'medium'"></ion-icon>
           <ion-label>

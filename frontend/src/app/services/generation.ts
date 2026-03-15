@@ -1,5 +1,6 @@
-import { Injectable } from '@angular/core';
-import { interval, Subscription } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { Subscription, interval } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { ApiService } from './api';
 
 export interface GenerationJob {
@@ -12,18 +13,16 @@ export interface GenerationJob {
 
 @Injectable({ providedIn: 'root' })
 export class GenerationService {
+  private api = inject(ApiService);
   private pollingMap = new Map<number, Subscription>();
-
-  constructor(private api: ApiService) {}
 
   pollStatus(generationId: number, onUpdate: (job: GenerationJob) => void): void {
     if (this.pollingMap.has(generationId)) return;
 
     const sub = interval(5000).subscribe(async () => {
       try {
-        const result = await this.api.checkGenerationStatus(generationId).toPromise();
+        const result = await firstValueFrom(this.api.checkGenerationStatus(generationId));
         onUpdate(result);
-
         if (result.status === 'completed' || result.status === 'failed') {
           this.stopPolling(generationId);
         }

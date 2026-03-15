@@ -3,21 +3,24 @@
     <ion-title>Histórico</ion-title>
   </ion-toolbar>
   <ion-toolbar>
-    <ion-segment [value]="filterType ?? 'all'" (ionChange)="setFilter($event.detail.value === 'all' ? undefined : $event.detail.value?.toString())">
+    <ion-segment
+      [value]="filterType() ?? 'all'"
+      (ionChange)="setFilter($event.detail.value === 'all' ? undefined : $event.detail.value?.toString())">
       <ion-segment-button value="all">Todos</ion-segment-button>
-      <ion-segment-button value="video">Vídeos</ion-segment-button>
-      <ion-segment-button value="image">Imagens</ion-segment-button>
+      <ion-segment-button value="text-to-video">Texto</ion-segment-button>
+      <ion-segment-button value="image-to-video">Imagem</ion-segment-button>
+      <ion-segment-button value="first-last-frame">Frames</ion-segment-button>
     </ion-segment>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
 
-  @if (isLoading) {
+  @if (isLoading()) {
     <ion-progress-bar type="indeterminate"></ion-progress-bar>
   }
 
-  @if (!isLoading && generations.length === 0) {
+  @if (!isLoading() && generations().length === 0) {
     <div class="ion-text-center ion-padding">
       <ion-icon name="film-outline" style="font-size: 64px; color: var(--ion-color-medium)"></ion-icon>
       <p style="color: var(--ion-color-medium)">Nenhuma geração ainda.<br>Crie seu primeiro vídeo!</p>
@@ -25,10 +28,10 @@
   }
 
   <ion-list>
-    @for (gen of generations; track gen.id) {
+    @for (gen of generations(); track gen.id) {
       <ion-item>
         <ion-icon
-          [name]="gen.type === 'video' ? 'videocam-outline' : 'image-outline'"
+          [name]="gen.type === 'image-to-video' ? 'image-outline' : gen.type === 'first-last-frame' ? 'albums-outline' : 'videocam-outline'"
           slot="start"
           size="large"
           color="primary">
@@ -37,11 +40,9 @@
           <h2>{{ gen.prompt | slice:0:60 }}{{ gen.prompt.length > 60 ? '...' : '' }}</h2>
           <p>
             <ion-badge [color]="statusColor(gen.status)">{{ gen.status }}</ion-badge>
-            · {{ gen.model }} · {{ gen.createdAt | date:'dd/MM/yyyy HH:mm' }}
+            · {{ gen.type }} · {{ gen.model }}
           </p>
-          @if (gen.aspectRatio) {
-            <p>{{ gen.aspectRatio }} · {{ gen.durationSeconds }}s</p>
-          }
+          <p>{{ gen.createdAt | date:'dd/MM/yyyy HH:mm' }} · {{ gen.aspectRatio }} · {{ gen.durationSeconds }}s</p>
         </ion-label>
         <ion-button fill="clear" color="danger" slot="end" (click)="deleteGeneration(gen.id)">
           <ion-icon name="trash-outline"></ion-icon>
@@ -51,7 +52,7 @@
   </ion-list>
 
   <div class="ion-text-center ion-padding" style="color: var(--ion-color-medium); font-size: 12px">
-    {{ generations.length }} de {{ total }} registros
+    {{ generations().length }} de {{ total() }} registros
   </div>
 
 </ion-content>

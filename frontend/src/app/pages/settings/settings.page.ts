@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../services/api';
 import { AlertController, ToastController } from '@ionic/angular';
 
@@ -6,43 +7,43 @@ import { AlertController, ToastController } from '@ionic/angular';
   selector: 'app-settings',
   templateUrl: './settings.page.html',
   styleUrls: ['./settings.page.scss'],
+  standalone: false,
 })
 export class SettingsPage implements OnInit {
-  apiKeys: any[] = [];
-  newKeyValue = '';
-  newKeyLabel = '';
-  isAdding = false;
+  private api = inject(ApiService);
+  private alertCtrl = inject(AlertController);
+  private toastCtrl = inject(ToastController);
 
-  constructor(
-    private api: ApiService,
-    private alertCtrl: AlertController,
-    private toastCtrl: ToastController
-  ) {}
+  apiKeys = signal<any[]>([]);
+  newKeyValue = signal('');
+  newKeyLabel = signal('');
+  isAdding = signal(false);
 
   ngOnInit() {
     this.loadKeys();
   }
 
   async loadKeys() {
-    this.apiKeys = await this.api.getApiKeys().toPromise() ?? [];
+    const keys = await firstValueFrom(this.api.getApiKeys());
+    this.apiKeys.set(keys ?? []);
   }
 
   async addKey() {
-    if (!this.newKeyValue.trim()) return;
-    this.isAdding = true;
+    if (!this.newKeyValue().trim()) return;
+    this.isAdding.set(true);
     try {
-      await this.api.createApiKey({
+      await firstValueFrom(this.api.createApiKey({
         provider: 'google',
-        keyValue: this.newKeyValue,
-        label: this.newKeyLabel || undefined,
-      }).toPromise();
-      this.newKeyValue = '';
-      this.newKeyLabel = '';
+        keyValue: this.newKeyValue(),
+        label: this.newKeyLabel() || undefined,
+      }));
+      this.newKeyValue.set('');
+      this.newKeyLabel.set('');
       await this.loadKeys();
       const toast = await this.toastCtrl.create({ message: 'Chave adicionada!', duration: 2000, color: 'success' });
       await toast.present();
     } finally {
-      this.isAdding = false;
+      this.isAdding.set(false);
     }
   }
 
@@ -56,7 +57,7 @@ export class SettingsPage implements OnInit {
           text: 'Remover',
           role: 'destructive',
           handler: async () => {
-            await this.api.deleteApiKey(id).toPromise();
+            await firstValueFrom(this.api.deleteApiKey(id));
             await this.loadKeys();
           }
         }
@@ -66,7 +67,7 @@ export class SettingsPage implements OnInit {
   }
 
   async toggleActive(key: any) {
-    await this.api.updateApiKey(key.id, { isActive: !key.isActive }).toPromise();
+    await firstValueFrom(this.api.updateApiKey(key.id, { isActive: !key.isActive }));
     await this.loadKeys();
   }
 }
