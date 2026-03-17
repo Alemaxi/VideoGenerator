@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VideoGenerator.API.Data;
 using VideoGenerator.API.Models;
+using VideoGenerator.API.Models.Veo3;
 using VideoGenerator.API.Services;
 
 namespace VideoGenerator.API.Controllers;
@@ -42,20 +43,17 @@ public class GenerationsController(
     [HttpPost("video")]
     public async Task<IActionResult> GenerateVideo([FromBody] GenerateVideoRequest request)
     {
-        var apiKey = await db.ApiKeys
-            .Where(k => k.Provider == "google" && k.IsActive)
-            .FirstOrDefaultAsync();
+        var providerConfig = await ResolveProviderConfig(request.Provider);
+        if (providerConfig is null)
+            return BadRequest(new { error = $"No active API key found for provider '{request.Provider}'. Please add your key in Settings." });
 
-        if (apiKey is null)
-            return BadRequest(new { error = "No active Google API key found. Please add your API key in Settings." });
-
-        var decryptedKey = encryption.Decrypt(apiKey.KeyValue);
+        var model = request.Model ?? "veo-3.1-generate-preview";
 
         var generation = new Generation
         {
             Type = request.Mode,
-            Provider = "google",
-            Model = request.Model ?? "veo-3.0-generate-preview",
+            Provider = request.Provider,
+            Model = model,
             Prompt = request.Prompt,
             NegativePrompt = request.NegativePrompt,
             DurationSeconds = request.DurationSeconds ?? 8,
@@ -68,9 +66,8 @@ public class GenerationsController(
 
         try
         {
-            var operationName = await veo3.GenerateVideoAsync(request, decryptedKey);
+            var operationName = await veo3.GenerateVideoAsync(request, providerConfig);
             generation.OperationName = operationName;
-            generation.Status = "processing";
             await db.SaveChangesAsync();
 
             return Accepted(new { generation.Id, generation.Status, generation.OperationName });
@@ -92,33 +89,64 @@ public class GenerationsController(
         if (generation is null) return NotFound();
         if (generation.OperationName is null) return BadRequest(new { error = "No operation to check" });
 
-        var apiKey = await db.ApiKeys
-            .Where(k => k.Provider == "google" && k.IsActive)
-            .FirstOrDefaultAsync();
+        var providerConfig = await ResolveProviderConfig(generation.Provider);
+        if (providerConfig is null)
+            return BadRequest(new { error = $"No active API key found for provider '{generation.Provider}'." });
 
-        if (apiKey is null) return BadRequest(new { error = "No active Google API key found." });
-
-        var decryptedKey = encryption.Decrypt(apiKey.KeyValue);
-
-        var status = await veo3.CheckOperationStatusAsync(generation.OperationName, decryptedKey);
+        var status = await veo3.CheckOperationStatusAsync(generation.OperationName, providerConfig);
 
         if (status.Done)
         {
-            if (status.Error is not null)
-            {
-                generation.Status = "failed";
-                generation.ErrorMessage = status.Error;
-            }
-            else
-            {
-                generation.Status = "completed";
-                generation.CompletedAt = DateTime.UtcNow;
-                generation.OutputPath = status.VideoUris?.FirstOrDefault();
-            }
+            generation.Status = status.Error is not null ? "failed" : "completed";
+            generation.ErrorMessage = status.Error;
+            generation.CompletedAt = status.Error is null ? DateTime.UtcNow : null;
+            generation.OutputPath = status.VideoUris?.FirstOrDefault();
             await db.SaveChangesAsync();
         }
 
         return Ok(new { generation.Id, generation.Status, generation.OutputPath, generation.ErrorMessage });
+    }
+
+    [HttpGet("{id}/download")]
+    public async Task<IActionResult> Download(int id)
+    {
+        var generation = await db.Generations.FindAsync(id);
+        if (generation is null) return NotFound();
+        if (string.IsNullOrEmpty(generation.OutputPath))
+            return BadRequest(new { error = "Vídeo ainda não disponível." });
+
+        var providerConfig = await ResolveProviderConfig(generation.Provider);
+        if (providerConfig is null)
+            return BadRequest(new { error = "API key não encontrada." });
+
+        // Gemini Files API: outputPath may already contain ?alt=media
+        var downloadUrl = generation.Provider == "vertex-ai"
+            ? generation.OutputPath
+            : generation.OutputPath!.Contains('?')
+                ? $"{generation.OutputPath}&key={providerConfig.ApiKey}"
+                : $"{generation.OutputPath}?alt=media&key={providerConfig.ApiKey}";
+
+        logger.LogInformation("Downloading video from: {Url}", generation.OutputPath);
+
+        using var req = new HttpRequestMessage(HttpMethod.Get, downloadUrl);
+        if (generation.Provider == "vertex-ai")
+            req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", providerConfig.ApiKey);
+
+        var httpClient = HttpContext.RequestServices.GetRequiredService<IHttpClientFactory>().CreateClient();
+        var response = await httpClient.SendAsync(req, HttpCompletionOption.ResponseHeadersRead);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync();
+            logger.LogError("Download failed: {Status} - {Body}", response.StatusCode, body);
+            return StatusCode((int)response.StatusCode, new { error = $"Falha ao baixar vídeo: {body}" });
+        }
+
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? "video/mp4";
+        var stream = await response.Content.ReadAsStreamAsync();
+        var filename = $"video_{id}_{DateTime.UtcNow:yyyyMMdd}.mp4";
+
+        return File(stream, contentType, filename);
     }
 
     [HttpDelete("{id}")]
@@ -131,5 +159,24 @@ public class GenerationsController(
         await db.SaveChangesAsync();
 
         return NoContent();
+    }
+
+    // --- Helpers ---
+
+    private async Task<VeoProviderConfig?> ResolveProviderConfig(string provider)
+    {
+        var apiKey = await db.ApiKeys
+            .Where(k => k.Provider == provider && k.IsActive)
+            .FirstOrDefaultAsync();
+
+        if (apiKey is null) return null;
+
+        return new VeoProviderConfig
+        {
+            Provider = provider,
+            ApiKey = encryption.Decrypt(apiKey.KeyValue),
+            ProjectId = apiKey.ProjectId,
+            Region = apiKey.Region
+        };
     }
 }

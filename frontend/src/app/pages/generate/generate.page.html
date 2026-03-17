@@ -39,18 +39,17 @@
         labelPlacement="floating">
       </ion-textarea>
 
-      @if (mode() === 'text-to-video') {
-        <ion-textarea
-          [ngModel]="negativePrompt()"
-          (ngModelChange)="negativePrompt.set($event)"
-          placeholder="Ex: blurry, low quality, distorted..."
-          [rows]="2"
-          fill="outline"
-          label="Negative Prompt (opcional)"
-          labelPlacement="floating"
-          class="ion-margin-top">
-        </ion-textarea>
-      }
+      <ion-textarea
+        [ngModel]="negativePrompt()"
+        (ngModelChange)="negativePrompt.set($event)"
+        placeholder="Ex: blurry, low quality, distorted..."
+        [rows]="2"
+        fill="outline"
+        label="Negative Prompt (opcional)"
+        labelPlacement="floating"
+        class="ion-margin-top">
+      </ion-textarea>
+
     </ion-card-content>
   </ion-card>
 
@@ -138,10 +137,19 @@
     <ion-card-content>
 
       <ion-item>
+        <ion-label>Provider</ion-label>
+        <ion-select [ngModel]="provider()" (ngModelChange)="setProvider($event)" interface="popover">
+          <ion-select-option value="google-ai-studio">Google AI Studio</ion-select-option>
+          <ion-select-option value="vertex-ai">Vertex AI</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
         <ion-label>Modelo</ion-label>
         <ion-select [ngModel]="model()" (ngModelChange)="model.set($event)" interface="popover">
-          <ion-select-option value="veo-3.0-generate-preview">VEO 3.0 (Preview)</ion-select-option>
-          <ion-select-option value="veo-2.0-generate-001">VEO 2.0</ion-select-option>
+          <ion-select-option value="veo-3.1-generate-preview">VEO 3.1 (Preview)</ion-select-option>
+          <ion-select-option value="veo-3.1-fast-generate-preview">VEO 3.1 Fast (Preview)</ion-select-option>
+          <ion-select-option value="veo-3.0-generate">VEO 3.0 (GA)</ion-select-option>
         </ion-select>
       </ion-item>
 
@@ -162,25 +170,6 @@
         </ion-select>
       </ion-item>
 
-      @if (mode() === 'text-to-video') {
-        <ion-item>
-          <ion-label>Melhorar prompt automaticamente</ion-label>
-          <ion-toggle
-            [ngModel]="enhancePrompt()"
-            (ionChange)="enhancePrompt.set($event.detail.checked)"
-            slot="end">
-          </ion-toggle>
-        </ion-item>
-      }
-
-      <ion-item>
-        <ion-label>Gerar áudio</ion-label>
-        <ion-toggle
-          [ngModel]="generateAudio()"
-          (ionChange)="generateAudio.set($event.detail.checked)"
-          slot="end">
-        </ion-toggle>
-      </ion-item>
 
     </ion-card-content>
   </ion-card>
@@ -214,7 +203,10 @@
               <p>{{ currentJob()!.errorMessage }}</p>
             }
             @if (currentJob()!.outputPath) {
-              <p>Salvo em: {{ currentJob()!.outputPath }}</p>
+              <ion-button size="small" fill="outline" color="primary" (click)="download()">
+                <ion-icon name="download-outline" slot="start"></ion-icon>
+                Baixar Vídeo
+              </ion-button>
             }
           </ion-label>
         </ion-item>

@@ -15,15 +15,16 @@ export class GeneratePage implements OnDestroy {
   private generationService = inject(GenerationService);
   private toastCtrl = inject(ToastController);
 
-  // Mode
+  // Mode e Provider
   mode = signal<'text-to-video' | 'image-to-video' | 'first-last-frame'>('text-to-video');
+  provider = signal<'google-ai-studio' | 'vertex-ai'>('google-ai-studio');
 
   // Prompt
   prompt = signal('');
   negativePrompt = signal('');
 
   // Settings
-  model = signal('veo-3.0-generate-preview');
+  model = signal('veo-3.1-generate-preview');
   durationSeconds = signal(8);
   aspectRatio = signal('16:9');
   enhancePrompt = signal(true);
@@ -103,6 +104,7 @@ export class GeneratePage implements OnDestroy {
         enhancePrompt: this.mode() === 'text-to-video' ? this.enhancePrompt() : undefined,
         generateAudio: this.generateAudio(),
         mode: this.mode(),
+        provider: this.provider(),
         imageBase64: this.imageBase64() ?? undefined,
         imageMimeType: this.imageMimeType(),
         firstFrameBase64: this.firstFrameBase64() ?? undefined,
@@ -134,6 +136,23 @@ export class GeneratePage implements OnDestroy {
     } else {
       this.mode.set('text-to-video');
     }
+  }
+
+  setProvider(value: string | undefined) {
+    this.provider.set(value === 'vertex-ai' ? 'vertex-ai' : 'google-ai-studio');
+  }
+
+  async download() {
+    const job = this.currentJob();
+    if (!job?.id) return;
+    const response = await firstValueFrom(this.api.downloadGeneration(job.id));
+    const blob = response.body!;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `video_${job.id}.mp4`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   ngOnDestroy() {

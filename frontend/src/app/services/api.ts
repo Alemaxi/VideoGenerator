@@ -13,7 +13,7 @@ export class ApiService {
     return this.http.get<any[]>(`${this.baseUrl}/api/apikeys`);
   }
 
-  createApiKey(data: { provider: string; keyValue: string; label?: string }) {
+  createApiKey(data: { provider: string; keyValue: string; label?: string; projectId?: string; region?: string }) {
     return this.http.post(`${this.baseUrl}/api/apikeys`, data);
   }
 
@@ -41,6 +41,7 @@ export class ApiService {
     enhancePrompt?: boolean;
     generateAudio?: boolean;
     mode?: 'text-to-video' | 'image-to-video' | 'first-last-frame';
+    provider?: 'google-ai-studio' | 'vertex-ai';
     imageBase64?: string;
     imageMimeType?: string;
     firstFrameBase64?: string;
@@ -53,6 +54,13 @@ export class ApiService {
 
   checkGenerationStatus(id: number) {
     return this.http.post<any>(`${this.baseUrl}/api/generations/${id}/check-status`, {});
+  }
+
+  downloadGeneration(id: number) {
+    return this.http.get(`${this.baseUrl}/api/generations/${id}/download`, {
+      responseType: 'blob',
+      observe: 'response'
+    });
   }
 
   deleteGeneration(id: number) {

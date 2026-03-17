@@ -44,6 +44,18 @@
           </p>
           <p>{{ gen.createdAt | date:'dd/MM/yyyy HH:mm' }} · {{ gen.aspectRatio }} · {{ gen.durationSeconds }}s</p>
         </ion-label>
+        @if (gen.status === 'completed' && gen.outputPath) {
+          <ion-button fill="clear" color="primary" slot="end" (click)="downloadGeneration(gen.id, gen.prompt)">
+            <ion-icon name="download-outline"></ion-icon>
+          </ion-button>
+        }
+        @if (gen.status === 'processing' || (gen.status === 'completed' && !gen.outputPath)) {
+          <ion-button fill="clear" color="warning" slot="end"
+            [disabled]="recheckingId() === gen.id"
+            (click)="recheckStatus(gen)">
+            <ion-icon [name]="recheckingId() === gen.id ? 'hourglass-outline' : 'refresh-outline'"></ion-icon>
+          </ion-button>
+        }
         <ion-button fill="clear" color="danger" slot="end" (click)="deleteGeneration(gen.id)">
           <ion-icon name="trash-outline"></ion-icon>
         </ion-button>

@@ -17,6 +17,7 @@ export class HistoryPage implements OnInit {
   total = signal(0);
   filterType = signal<string | undefined>(undefined);
   isLoading = signal(false);
+  recheckingId = signal<number | null>(null);
 
   private page = 1;
   private pageSize = 20;
@@ -40,6 +41,33 @@ export class HistoryPage implements OnInit {
     this.filterType.set(type);
     this.page = 1;
     this.load();
+  }
+
+  async downloadGeneration(id: number, prompt: string) {
+    try {
+      const response = await firstValueFrom(this.api.downloadGeneration(id));
+      const blob = response.body!;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `video_${id}.mp4`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // erro silencioso — o botão só aparece quando status = completed
+    }
+  }
+
+  async recheckStatus(gen: any) {
+    this.recheckingId.set(gen.id);
+    try {
+      const result = await firstValueFrom(this.api.checkGenerationStatus(gen.id));
+      this.generations.update(list =>
+        list.map(g => g.id === gen.id ? { ...g, ...result } : g)
+      );
+    } finally {
+      this.recheckingId.set(null);
+    }
   }
 
   async deleteGeneration(id: number) {
