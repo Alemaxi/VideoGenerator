@@ -112,18 +112,14 @@ public class Veo3Service(HttpClient httpClient, ILogger<Veo3Service> logger)
                     mimeType = request.ImageMimeType ?? "image/jpeg"
                 }
             },
+            // first frame goes in instance as "image"; last frame goes in parameters
             "first-last-frame" => new
             {
                 prompt = request.Prompt,
-                firstFrame = new
+                image = new
                 {
                     bytesBase64Encoded = request.FirstFrameBase64,
                     mimeType = request.FirstFrameMimeType ?? "image/jpeg"
-                },
-                lastFrame = new
-                {
-                    bytesBase64Encoded = request.LastFrameBase64,
-                    mimeType = request.LastFrameMimeType ?? "image/jpeg"
                 }
             },
             _ => (object)new { prompt = request.Prompt }
@@ -135,6 +131,13 @@ public class Veo3Service(HttpClient httpClient, ILogger<Veo3Service> logger)
             ["aspectRatio"] = request.AspectRatio ?? "16:9",
             ["durationSeconds"] = request.DurationSeconds ?? 8
         };
+
+        if (request.Mode == "first-last-frame" && !string.IsNullOrEmpty(request.LastFrameBase64))
+            parameters["lastFrame"] = new
+            {
+                bytesBase64Encoded = request.LastFrameBase64,
+                mimeType = request.LastFrameMimeType ?? "image/jpeg"
+            };
 
         if (!string.IsNullOrEmpty(request.NegativePrompt))
             parameters["negativePrompt"] = request.NegativePrompt;

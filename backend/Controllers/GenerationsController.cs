@@ -12,6 +12,7 @@ namespace VideoGenerator.API.Controllers;
 public class GenerationsController(
     AppDbContext db,
     Veo3Service veo3,
+    SoraService sora,
     EncryptionService encryption,
     ILogger<GenerationsController> logger) : ControllerBase
 {
@@ -66,7 +67,9 @@ public class GenerationsController(
 
         try
         {
-            var operationName = await veo3.GenerateVideoAsync(request, providerConfig);
+            var operationName = request.Provider == "openai"
+                ? await sora.GenerateVideoAsync(request, providerConfig)
+                : await veo3.GenerateVideoAsync(request, providerConfig);
             generation.OperationName = operationName;
             await db.SaveChangesAsync();
 
@@ -93,7 +96,9 @@ public class GenerationsController(
         if (providerConfig is null)
             return BadRequest(new { error = $"No active API key found for provider '{generation.Provider}'." });
 
-        var status = await veo3.CheckOperationStatusAsync(generation.OperationName, providerConfig);
+        var status = generation.Provider == "openai"
+            ? await sora.CheckOperationStatusAsync(generation.OperationName, providerConfig)
+            : await veo3.CheckOperationStatusAsync(generation.OperationName, providerConfig);
 
         if (status.Done)
         {
@@ -119,17 +124,28 @@ public class GenerationsController(
         if (providerConfig is null)
             return BadRequest(new { error = "API key não encontrada." });
 
-        // Gemini Files API: outputPath may already contain ?alt=media
-        var downloadUrl = generation.Provider == "vertex-ai"
-            ? generation.OutputPath
-            : generation.OutputPath!.Contains('?')
+        string? downloadUrl;
+        if (generation.Provider == "openai")
+        {
+            // Sora returns a direct CDN URL (pre-signed), no auth required
+            downloadUrl = generation.OutputPath;
+        }
+        else if (generation.Provider == "vertex-ai")
+        {
+            downloadUrl = generation.OutputPath;
+        }
+        else
+        {
+            // Gemini Files API: outputPath may already contain ?alt=media
+            downloadUrl = generation.OutputPath!.Contains('?')
                 ? $"{generation.OutputPath}&key={providerConfig.ApiKey}"
                 : $"{generation.OutputPath}?alt=media&key={providerConfig.ApiKey}";
+        }
 
         logger.LogInformation("Downloading video from: {Url}", generation.OutputPath);
 
         using var req = new HttpRequestMessage(HttpMethod.Get, downloadUrl);
-        if (generation.Provider == "vertex-ai")
+        if (generation.Provider is "vertex-ai" or "openai")
             req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", providerConfig.ApiKey);
 
         var httpClient = HttpContext.RequestServices.GetRequiredService<IHttpClientFactory>().CreateClient();

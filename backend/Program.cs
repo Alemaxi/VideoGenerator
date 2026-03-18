@@ -14,6 +14,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Services
 builder.Services.AddScoped<EncryptionService>();
 builder.Services.AddHttpClient<Veo3Service>();
+builder.Services.AddHttpClient<SoraService>();
 builder.Services.AddHttpClient();
 
 // CORS para o Electron/Angular
