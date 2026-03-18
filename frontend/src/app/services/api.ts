@@ -41,7 +41,7 @@ export class ApiService {
     enhancePrompt?: boolean;
     generateAudio?: boolean;
     mode?: 'text-to-video' | 'image-to-video' | 'first-last-frame';
-    provider?: 'google-ai-studio' | 'vertex-ai';
+    provider?: 'google-ai-studio' | 'vertex-ai' | 'openai';
     imageBase64?: string;
     imageMimeType?: string;
     firstFrameBase64?: string;

@@ -24,6 +24,10 @@
           <ion-icon name="cloud-outline"></ion-icon>
           <ion-label>Vertex AI</ion-label>
         </ion-segment-button>
+        <ion-segment-button value="openai">
+          <ion-icon name="sparkles-outline"></ion-icon>
+          <ion-label>OpenAI</ion-label>
+        </ion-segment-button>
       </ion-segment>
 
       <ion-item>
@@ -41,10 +45,10 @@
           [ngModel]="newKeyValue()"
           (ngModelChange)="newKeyValue.set($event)"
           type="password"
-          [label]="newProvider() === 'vertex-ai' ? 'Access Token (Bearer)' : 'Google API Key'"
+          [label]="newProvider() === 'openai' ? 'OpenAI API Key' : newProvider() === 'vertex-ai' ? 'Access Token (Bearer)' : 'Google API Key'"
           labelPlacement="floating"
           fill="outline"
-          [placeholder]="newProvider() === 'vertex-ai' ? 'ya29...' : 'AIza...'">
+          [placeholder]="newProvider() === 'openai' ? 'sk-...' : newProvider() === 'vertex-ai' ? 'ya29...' : 'AIza...'">
         </ion-input>
       </ion-item>
 

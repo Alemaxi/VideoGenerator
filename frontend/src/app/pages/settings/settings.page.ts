@@ -15,7 +15,7 @@ export class SettingsPage implements OnInit {
   private toastCtrl = inject(ToastController);
 
   apiKeys = signal<any[]>([]);
-  newProvider = signal<'google-ai-studio' | 'vertex-ai'>('google-ai-studio');
+  newProvider = signal<'google-ai-studio' | 'vertex-ai' | 'openai'>('google-ai-studio');
   newKeyValue = signal('');
   newKeyLabel = signal('');
   newProjectId = signal('');
@@ -32,7 +32,9 @@ export class SettingsPage implements OnInit {
   }
 
   setProvider(value: string | undefined) {
-    this.newProvider.set(value === 'vertex-ai' ? 'vertex-ai' : 'google-ai-studio');
+    if (value === 'vertex-ai') this.newProvider.set('vertex-ai');
+    else if (value === 'openai') this.newProvider.set('openai');
+    else this.newProvider.set('google-ai-studio');
   }
 
   async addKey() {
@@ -90,10 +92,14 @@ export class SettingsPage implements OnInit {
   }
 
   providerLabel(provider: string) {
-    return provider === 'vertex-ai' ? 'Vertex AI' : 'Google AI Studio';
+    if (provider === 'vertex-ai') return 'Vertex AI';
+    if (provider === 'openai') return 'OpenAI';
+    return 'Google AI Studio';
   }
 
   providerColor(provider: string) {
-    return provider === 'vertex-ai' ? 'tertiary' : 'primary';
+    if (provider === 'vertex-ai') return 'tertiary';
+    if (provider === 'openai') return 'success';
+    return 'primary';
   }
 }

@@ -8,11 +8,11 @@
         <ion-icon name="text-outline"></ion-icon>
         <ion-label>Texto</ion-label>
       </ion-segment-button>
-      <ion-segment-button value="image-to-video">
+      <ion-segment-button value="image-to-video" [disabled]="!isModeSupported('image-to-video')()">
         <ion-icon name="image-outline"></ion-icon>
         <ion-label>Imagem</ion-label>
       </ion-segment-button>
-      <ion-segment-button value="first-last-frame">
+      <ion-segment-button value="first-last-frame" [disabled]="!isModeSupported('first-last-frame')()">
         <ion-icon name="albums-outline"></ion-icon>
         <ion-label>1º e Último Frame</ion-label>
       </ion-segment-button>
@@ -139,34 +139,36 @@
       <ion-item>
         <ion-label>Provider</ion-label>
         <ion-select [ngModel]="provider()" (ngModelChange)="setProvider($event)" interface="popover">
-          <ion-select-option value="google-ai-studio">Google AI Studio</ion-select-option>
-          <ion-select-option value="vertex-ai">Vertex AI</ion-select-option>
+          @for (p of PROVIDERS; track p.id) {
+            <ion-select-option [value]="p.id">{{ p.label }}</ion-select-option>
+          }
         </ion-select>
       </ion-item>
 
       <ion-item>
         <ion-label>Modelo</ion-label>
-        <ion-select [ngModel]="model()" (ngModelChange)="model.set($event)" interface="popover">
-          <ion-select-option value="veo-3.1-generate-preview">VEO 3.1 (Preview)</ion-select-option>
-          <ion-select-option value="veo-3.1-fast-generate-preview">VEO 3.1 Fast (Preview)</ion-select-option>
-          <ion-select-option value="veo-3.0-generate">VEO 3.0 (GA)</ion-select-option>
+        <ion-select [ngModel]="model()" (ngModelChange)="setModel($event)" interface="popover">
+          @for (m of currentProviderConfig().models; track m.value) {
+            <ion-select-option [value]="m.value">{{ m.label }}</ion-select-option>
+          }
         </ion-select>
       </ion-item>
 
       <ion-item>
         <ion-label>Duração</ion-label>
         <ion-select [ngModel]="durationSeconds()" (ngModelChange)="durationSeconds.set($event)" interface="popover">
-          <ion-select-option [value]="5">5 segundos</ion-select-option>
-          <ion-select-option [value]="8">8 segundos</ion-select-option>
+          @for (d of currentProviderConfig().durationOptions; track d.value) {
+            <ion-select-option [value]="d.value">{{ d.label }}</ion-select-option>
+          }
         </ion-select>
       </ion-item>
 
       <ion-item>
         <ion-label>Proporção</ion-label>
         <ion-select [ngModel]="aspectRatio()" (ngModelChange)="aspectRatio.set($event)" interface="popover">
-          <ion-select-option value="16:9">16:9 (Landscape)</ion-select-option>
-          <ion-select-option value="9:16">9:16 (Portrait)</ion-select-option>
-          <ion-select-option value="1:1">1:1 (Square)</ion-select-option>
+          @for (a of currentAspectRatios(); track a.value) {
+            <ion-select-option [value]="a.value">{{ a.label }}</ion-select-option>
+          }
         </ion-select>
       </ion-item>
 
