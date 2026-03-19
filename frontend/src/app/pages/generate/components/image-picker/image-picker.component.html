@@ -1,0 +1,14 @@
+<ion-button fill="outline" expand="block" (click)="fileInput.click()">
+  <ion-icon [name]="buttonIcon" slot="start"></ion-icon>
+  {{ buttonLabel }}
+</ion-button>
+<input #fileInput type="file" accept="image/*" style="display:none" (change)="onFileSelected($event)">
+
+@if (imageBase64) {
+  <ion-chip color="success" class="ion-margin-top">
+    <ion-icon name="checkmark-circle-outline"></ion-icon>
+    <ion-label>Imagem selecionada</ion-label>
+  </ion-chip>
+  <img [src]="'data:' + imageMimeType + ';base64,' + imageBase64"
+       style="width:100%; max-height:180px; object-fit:cover; border-radius:8px; margin-top:8px">
+}

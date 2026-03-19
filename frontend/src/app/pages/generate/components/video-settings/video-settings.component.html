@@ -1,0 +1,44 @@
+<ion-card>
+  <ion-card-header>
+    <ion-card-title>Configurações</ion-card-title>
+  </ion-card-header>
+  <ion-card-content>
+
+    <ion-item>
+      <ion-label>Provider</ion-label>
+      <ion-select [ngModel]="provider" (ngModelChange)="providerChange.emit($event)" interface="popover">
+        @for (p of providers; track p.id) {
+          <ion-select-option [value]="p.id">{{ p.label }}</ion-select-option>
+        }
+      </ion-select>
+    </ion-item>
+
+    <ion-item>
+      <ion-label>Modelo</ion-label>
+      <ion-select [ngModel]="model" (ngModelChange)="modelChange.emit($event)" interface="popover">
+        @for (m of models; track m.value) {
+          <ion-select-option [value]="m.value">{{ m.label }}</ion-select-option>
+        }
+      </ion-select>
+    </ion-item>
+
+    <ion-item>
+      <ion-label>Duração</ion-label>
+      <ion-select [ngModel]="durationSeconds" (ngModelChange)="durationSecondsChange.emit($event)" interface="popover">
+        @for (d of durationOptions; track d.value) {
+          <ion-select-option [value]="d.value">{{ d.label }}</ion-select-option>
+        }
+      </ion-select>
+    </ion-item>
+
+    <ion-item>
+      <ion-label>Proporção</ion-label>
+      <ion-select [ngModel]="aspectRatio" (ngModelChange)="aspectRatioChange.emit($event)" interface="popover">
+        @for (a of aspectRatios; track a.value) {
+          <ion-select-option [value]="a.value">{{ a.label }}</ion-select-option>
+        }
+      </ion-select>
+    </ion-item>
+
+  </ion-card-content>
+</ion-card>

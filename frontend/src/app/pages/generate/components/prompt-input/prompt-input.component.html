@@ -1,0 +1,28 @@
+<ion-card>
+  <ion-card-header>
+    <ion-card-title>Prompt</ion-card-title>
+    <ion-card-subtitle>Descreva o vídeo que deseja gerar</ion-card-subtitle>
+  </ion-card-header>
+  <ion-card-content>
+    <ion-textarea
+      [ngModel]="prompt"
+      (ngModelChange)="promptChange.emit($event)"
+      placeholder="Ex: A cinematic shot of a red fox running through a snowy forest at golden hour..."
+      [rows]="4"
+      fill="outline"
+      label="Prompt"
+      labelPlacement="floating">
+    </ion-textarea>
+
+    <ion-textarea
+      [ngModel]="negativePrompt"
+      (ngModelChange)="negativePromptChange.emit($event)"
+      placeholder="Ex: blurry, low quality, distorted..."
+      [rows]="2"
+      fill="outline"
+      label="Negative Prompt (opcional)"
+      labelPlacement="floating"
+      class="ion-margin-top">
+    </ion-textarea>
+  </ion-card-content>
+</ion-card>

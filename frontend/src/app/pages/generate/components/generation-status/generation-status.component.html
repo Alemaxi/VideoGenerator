@@ -1,0 +1,29 @@
+<ion-card color="light">
+  <ion-card-header>
+    <ion-card-title>Status da Geração</ion-card-title>
+  </ion-card-header>
+  <ion-card-content>
+    <ion-item lines="none">
+      <ion-icon
+        [name]="job!.status === 'completed' ? 'checkmark-circle' : job!.status === 'failed' ? 'close-circle' : 'hourglass'"
+        [color]="job!.status === 'completed' ? 'success' : job!.status === 'failed' ? 'danger' : 'warning'"
+        slot="start" size="large">
+      </ion-icon>
+      <ion-label>
+        <h2>{{ statusLabel }}</h2>
+        @if (job!.errorMessage) {
+          <p>{{ job!.errorMessage }}</p>
+        }
+        @if (job!.outputPath) {
+          <ion-button size="small" fill="outline" color="primary" (click)="download.emit()">
+            <ion-icon name="download-outline" slot="start"></ion-icon>
+            Baixar Vídeo
+          </ion-button>
+        }
+      </ion-label>
+    </ion-item>
+    @if (job!.status === 'processing') {
+      <ion-progress-bar type="indeterminate" color="primary"></ion-progress-bar>
+    }
+  </ion-card-content>
+</ion-card>

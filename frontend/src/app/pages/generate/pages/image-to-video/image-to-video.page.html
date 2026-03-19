@@ -1,0 +1,59 @@
+<ion-content class="ion-padding">
+
+  <app-prompt-input
+    [prompt]="state.prompt()"
+    [negativePrompt]="state.negativePrompt()"
+    (promptChange)="state.prompt.set($event)"
+    (negativePromptChange)="state.negativePrompt.set($event)">
+  </app-prompt-input>
+
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Imagem de Entrada</ion-card-title>
+      <ion-card-subtitle>O modelo irá animar esta imagem</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      <app-image-picker
+        inputId="imgInput"
+        buttonLabel="Selecionar Imagem"
+        buttonIcon="cloud-upload-outline"
+        [imageBase64]="imageBase64()"
+        [imageMimeType]="imageMimeType()"
+        (imageSelected)="imageBase64.set($event.base64); imageMimeType.set($event.mimeType)">
+      </app-image-picker>
+    </ion-card-content>
+  </ion-card>
+
+  <app-video-settings
+    [providers]="state.PROVIDERS"
+    [provider]="state.provider()"
+    [models]="state.currentProviderConfig().models"
+    [model]="state.model()"
+    [durationOptions]="state.currentProviderConfig().durationOptions"
+    [durationSeconds]="state.durationSeconds()"
+    [aspectRatios]="state.currentAspectRatios()"
+    [aspectRatio]="state.aspectRatio()"
+    (providerChange)="state.setProvider($event)"
+    (modelChange)="state.setModel($event)"
+    (durationSecondsChange)="state.durationSeconds.set($event)"
+    (aspectRatioChange)="state.aspectRatio.set($event)">
+  </app-video-settings>
+
+  <ion-button
+    expand="block"
+    [disabled]="!state.prompt() || !imageBase64() || state.isGenerating()"
+    (click)="generate()"
+    class="ion-margin">
+    <ion-icon name="videocam-outline" slot="start"></ion-icon>
+    {{ state.isGenerating() ? 'Gerando...' : 'Gerar Vídeo' }}
+  </ion-button>
+
+  @if (state.currentJob()) {
+    <app-generation-status
+      [job]="state.currentJob()"
+      [statusLabel]="state.statusLabel()"
+      (download)="state.download()">
+    </app-generation-status>
+  }
+
+</ion-content>

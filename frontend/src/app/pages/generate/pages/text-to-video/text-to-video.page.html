@@ -1,0 +1,42 @@
+<ion-content class="ion-padding">
+
+  <app-prompt-input
+    [prompt]="state.prompt()"
+    [negativePrompt]="state.negativePrompt()"
+    (promptChange)="state.prompt.set($event)"
+    (negativePromptChange)="state.negativePrompt.set($event)">
+  </app-prompt-input>
+
+  <app-video-settings
+    [providers]="state.PROVIDERS"
+    [provider]="state.provider()"
+    [models]="state.currentProviderConfig().models"
+    [model]="state.model()"
+    [durationOptions]="state.currentProviderConfig().durationOptions"
+    [durationSeconds]="state.durationSeconds()"
+    [aspectRatios]="state.currentAspectRatios()"
+    [aspectRatio]="state.aspectRatio()"
+    (providerChange)="state.setProvider($event)"
+    (modelChange)="state.setModel($event)"
+    (durationSecondsChange)="state.durationSeconds.set($event)"
+    (aspectRatioChange)="state.aspectRatio.set($event)">
+  </app-video-settings>
+
+  <ion-button
+    expand="block"
+    [disabled]="!state.prompt() || state.isGenerating()"
+    (click)="state.generate({ mode: 'text-to-video' })"
+    class="ion-margin">
+    <ion-icon name="videocam-outline" slot="start"></ion-icon>
+    {{ state.isGenerating() ? 'Gerando...' : 'Gerar Vídeo' }}
+  </ion-button>
+
+  @if (state.currentJob()) {
+    <app-generation-status
+      [job]="state.currentJob()"
+      [statusLabel]="state.statusLabel()"
+      (download)="state.download()">
+    </app-generation-status>
+  }
+
+</ion-content>
